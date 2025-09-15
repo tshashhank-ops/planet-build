@@ -1,27 +1,90 @@
+'use client';
+
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { users, materials } from '@/lib/mock-data';
+import { users } from '@/lib/mock-data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Star, Leaf } from 'lucide-react';
-import MaterialCard from '@/components/material-card';
+import PostCard from '@/components/post-card';
 import EcoBadge from '@/components/eco-badge';
-import { use } from 'react';
+import { useEffect, useState, use } from 'react';
+import SellForm from '@/app/sell/sell-form';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
-export default function ProfilePage({ params }: { params: { id: string } }) {
+export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
-    const user = users.find((u) => u.id === parseInt(id));
+    const userId = Number(id);
+    const user = users.find((u) => u.id === userId);
 
     if (!user) {
         notFound();
     }
 
-    const userMaterials = materials.filter(m => m.sellerId === user.id);
+    // State for posts from DB
+    const [posts, setPosts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [editPost, setEditPost] = useState<any | null>(null);
+    const [modalOpen, setModalOpen] = useState(false);
+
+    // Fetch posts from DB
+    useEffect(() => {
+        const fetchPosts = async () => {
+            const res = await fetch('/api/posts');
+            const data = await res.json();
+            setPosts(data.data || []);
+        };
+        fetchPosts();
+    }, []);
+
+    // Filter posts for this user (assuming owner is stored as string or ObjectId)
+    const userPosts = posts.filter(p => {
+        // Try both string and number comparison for owner
+        return p.owner == id || p.ownerId == id || p.owner == user.id || p.ownerId == user.id;
+    });
+
+    // Reviews logic remains unchanged
     const userReviews = user.reviews.map(review => {
         const author = users.find(u => u.id === review.authorId);
         return { ...review, author };
-    })
+    });
+
+    // Edit post handler
+    const handleEdit = (post: any) => {
+        setEditPost(post);
+        setModalOpen(true);
+    };
+
+    // Delete post handler
+    const handleDelete = async (post: any) => {
+        setLoading(true);
+        try {
+            const postId = post._id || post.id;
+            if (!postId) {
+                alert('Post ID not found.');
+                setLoading(false);
+                return;
+            }
+            await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+            // Refetch posts
+            const res = await fetch('/api/posts');
+            const data = await res.json();
+            setPosts(data.data || []);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // On edit success, close modal and refresh posts
+    const handleEditSuccess = async () => {
+        setModalOpen(false);
+        setEditPost(null);
+        const res = await fetch('/api/posts');
+        const data = await res.json();
+        setPosts(data.data || []);
+    };
 
     return (
         <div className="space-y-8">
@@ -53,14 +116,24 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
 
             <Tabs defaultValue="listings" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="listings">Active Listings ({userMaterials.length})</TabsTrigger>
+                    <TabsTrigger value="listings">Active Listings ({userPosts.length})</TabsTrigger>
                     <TabsTrigger value="reviews">Reviews ({user.reviews.length})</TabsTrigger>
                 </TabsList>
                 <TabsContent value="listings">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
-                        {userMaterials.length > 0 ? (
-                            userMaterials.map(material => (
-                                <MaterialCard key={material.id} material={material} />
+                        {userPosts.length > 0 ? (
+                            userPosts.map(post => (
+                                <div key={post._id || post.id } className="relative group">
+                                    <PostCard post={post} />
+                                    <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                                        <Button size="icon" variant="outline" onClick={() => handleEdit(post)}>
+                                            Edit
+                                        </Button>
+                                        <Button size="icon" variant="destructive" onClick={() => handleDelete(post)} disabled={loading}>
+                                            Delete
+                                        </Button>
+                                    </div>
+                                </div>
                             ))
                         ) : (
                             <p className="col-span-full text-center text-muted-foreground py-8">This user has no active listings.</p>
@@ -102,6 +175,19 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
                     </div>
                 </TabsContent>
             </Tabs>
+
+            {/* Edit Modal */}
+            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    {editPost && (
+                        <SellForm
+                            post={editPost}
+                            mode="edit"
+                            onSuccess={handleEditSuccess}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

@@ -13,17 +13,52 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search, List, Map, Briefcase, ShoppingCart, PlusCircle } from 'lucide-react';
-import MaterialCard from '@/components/material-card';
+import PostCard from '@/components/post-card';
 import TradeLeadCard from '@/components/trade-lead-card';
-import { materials as allMaterials, tradeLeads as allLeads, users } from '@/lib/mock-data';
+import { tradeLeads as allLeads, users } from '@/lib/mock-data';
 import AiSuggestions from '@/components/ai-suggestions';
-import type { Material, TradeLead } from '@/lib/types';
+import type { Post, TradeLead } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MapView from '@/components/map-view';
-import React from 'react';
+import React, { useRef } from 'react';
 import VolumeContractCard from '@/components/volume-contract-card';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogClose,
+} from '@/components/ui/dialog';
+import SellForm from '@/app/sell/sell-form';
 
 function MarketplacePageContent() {
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editPost, setEditPost] = useState<Post | null>(null);
+    const [loading, setLoading] = useState(false);
+    const openModal = (post: Post) => {
+        setEditPost(post);
+        setModalOpen(true);
+    };
+
+    // Delete post
+    const handleDelete = async (post: Post) => {
+        if (!window.confirm('Delete this post?')) return;
+        setLoading(true);
+        try {
+            const postId = post.id || (post as any)._id;
+            if (!postId) {
+                alert('Post ID not found.');
+                setLoading(false);
+                return;
+            }
+            await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+            // Refetch posts
+            const data = await (await fetch('/api/posts')).json();
+            setAllPosts(data.data || []);
+        } finally {
+            setLoading(false);
+        }
+    };
   const searchParams = useSearchParams();
   const urlCategory = searchParams.get('category');
   const defaultTab = searchParams.get('tab') || 'listings';
@@ -32,39 +67,52 @@ function MarketplacePageContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [condition, setCondition] = useState('all');
   const [category, setCategory] = useState(urlCategory || 'all');
-  const [filteredMaterials, setFilteredMaterials] = useState<Material[]>(allMaterials);
+    const [allPosts, setAllPosts] = useState<Post[]>([]);
+    const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
   const [submittedSearch, setSubmittedSearch] = useState('');
   
   // State for Trade Leads
   const buyLeads = allLeads.filter(lead => lead.type === 'buy');
   const sellLeads = allLeads.filter(lead => lead.type === 'sell');
 
-  useEffect(() => {
-    setCategory(urlCategory || 'all');
-  }, [urlCategory]);
+    useEffect(() => {
+        setCategory(urlCategory || 'all');
+    }, [urlCategory]);
 
-  useEffect(() => {
-    let materials = allMaterials;
+    // Fetch posts from API
+    useEffect(() => {
+        async function fetchPosts() {
+            try {
+                const res = await fetch('/api/posts');
+                if (!res.ok) throw new Error('Failed to fetch posts');
+                const data = await res.json();
+                setAllPosts(data.data || []);
+            } catch (err) {
+                setAllPosts([]);
+            }
+        }
+        fetchPosts();
+    }, []);
 
-    if (condition !== 'all') {
-      materials = materials.filter(
-        (m) => m.condition.toLowerCase() === condition
-      );
-    }
-    if (category !== 'all') {
-      materials = materials.filter(
-        (m) => m.category.toLowerCase() === category
-      );
-    }
-
-    if (submittedSearch) {
-      materials = materials.filter((m) =>
-        m.name.toLowerCase().includes(submittedSearch.toLowerCase())
-      );
-    }
-
-    setFilteredMaterials(materials);
-  }, [condition, category, submittedSearch]);
+    useEffect(() => {
+        let posts = allPosts;
+        if (condition !== 'all') {
+            posts = posts.filter(
+                (p) => p.condition?.toLowerCase() === condition
+            );
+        }
+        if (category !== 'all') {
+            posts = posts.filter(
+                (p) => p.category?.toLowerCase() === category
+            );
+        }
+        if (submittedSearch) {
+            posts = posts.filter((p) =>
+                p.title?.toLowerCase().includes(submittedSearch.toLowerCase())
+            );
+        }
+        setFilteredPosts(posts);
+    }, [allPosts, condition, category, submittedSearch]);
 
 
   const handleSearch = (e: React.FormEvent) => {
@@ -72,9 +120,9 @@ function MarketplacePageContent() {
     setSubmittedSearch(searchTerm);
   };
 
-  const categories = [
-    ...new Set(allMaterials.map((material) => material.category)),
-  ];
+    const categories = [
+        ...new Set(allPosts.map((post) => post.category).filter(Boolean)),
+    ];
 
   const renderLead = (lead: TradeLead) => {
     const user = users.find(u => u.id === lead.userId)
@@ -148,11 +196,13 @@ function MarketplacePageContent() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Categories</SelectItem>
-                            {categories.map((cat) => (
-                            <SelectItem key={cat} value={cat.toLowerCase()}>
-                                {cat}
-                            </SelectItem>
-                            ))}
+                                {categories.map((cat) => (
+                                    cat ? (
+                                        <SelectItem key={cat} value={cat.toLowerCase()}>
+                                            {cat}
+                                        </SelectItem>
+                                    ) : null
+                                ))}
                         </SelectContent>
                         </Select>
                     </div>
@@ -170,34 +220,63 @@ function MarketplacePageContent() {
                     <Tabs defaultValue="list" className="w-full">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-4">
                         <h2 className="text-2xl font-bold font-headline">
-                        {submittedSearch || urlCategory ? 'Search Results' : 'Featured Listings'}
+                            {submittedSearch || urlCategory ? 'Search Results' : 'Featured Listings'}
                         </h2>
+                        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+                            <DialogContent className="flex3 max-w-2xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle>Edit Post</DialogTitle>
+                                </DialogHeader>
+                                {editPost && (
+                                    <SellForm
+                                        key={editPost.id}
+                                        post={editPost}
+                                        mode="edit"
+                                        onSuccess={() => {
+                                            setModalOpen(false);
+                                            setEditPost(null);
+                                            // Refetch posts
+                                            fetch('/api/posts').then(res => res.json()).then(data => setAllPosts(data.data || []));
+                                        }}
+                                    />
+                                )}
+                                <DialogClose asChild>
+                                    <Button className='' type="button" variant="outline">Cancel</Button>
+                                </DialogClose>
+                            </DialogContent>
+                        </Dialog>
                         <TabsList>
                         <TabsTrigger value="list">
                             <List className="mr-2 h-4 w-4" />
                             List
                         </TabsTrigger>
-                        <TabsTrigger value="map" disabled={filteredMaterials.length === 0}>
+                        <TabsTrigger value="map" disabled={filteredPosts.length === 0}>
                             <Map className="mr-2 h-4 w-4" />
                             Map
                         </TabsTrigger>
                         </TabsList>
                     </div>
                     <TabsContent value="list">
-                        {filteredMaterials.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {filteredMaterials.map((material) => (
-                            <MaterialCard key={material.id} material={material} />
-                            ))}
-                        </div>
-                        ) : (
-                        <div className="text-center py-16 bg-card rounded-lg">
-                            <p className="text-muted-foreground">No materials found. Try adjusting your search.</p>
-                        </div>
-                        )}
+                                                {filteredPosts.length > 0 ? (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                                        {filteredPosts.map((post) => (
+                                                            <div key={post.id} className="relative group">
+                                                                <PostCard post={post} />
+                                                                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                                                                    <Button size="sm" variant="outline" onClick={() => openModal(post)}>Edit</Button>
+                                                                    <Button size="sm" variant="destructive" onClick={() => handleDelete(post)}>Delete</Button>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                                ) : (
+                                                <div className="text-center py-16 bg-card rounded-lg">
+                                                        <p className="text-muted-foreground">No posts found. Try adjusting your search.</p>
+                                                </div>
+                                                )}
                     </TabsContent>
                     <TabsContent value="map">
-                        <MapView materials={filteredMaterials} />
+                        <MapView materials={filteredPosts} />
                     </TabsContent>
                     </Tabs>
                 </section>

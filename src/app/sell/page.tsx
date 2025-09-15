@@ -1,4 +1,4 @@
-import SellForm from './sell-form';
+import SellFormWrapper from './SellFormWrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Leaf } from 'lucide-react';
 
@@ -16,7 +16,7 @@ export default function SellPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <SellForm />
+          <SellFormWrapper />
         </CardContent>
       </Card>
     </div>

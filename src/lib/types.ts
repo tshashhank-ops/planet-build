@@ -5,14 +5,14 @@ export type Bid = {
   timestamp: string;
 };
 
-export type Material = {
+export type Post = {
   id: number;
-  name: string;
+  title: string;
   price: number;
   description: string;
   condition: 'New' | 'Reclaimed';
-  images: string[];
-  sellerId: number;
+  photos: string[];
+  ownerId: number;
   category: string;
   location: string;
   quantity: string;

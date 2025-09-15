@@ -4,7 +4,7 @@ import { use, useMemo, useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { materials, users } from '@/lib/mock-data';
+import { posts, users } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ export default function ItemPage({ params }: { params: { id: string } }) {
   const { user: currentUser } = useAuth();
   
   const itemId = parseInt(params.id, 10);
-  const initialMaterial = useMemo(() => materials.find((m) => m.id === itemId), [itemId]);
+  const initialMaterial = useMemo(() => posts.find((m) => m.id === itemId), [itemId]);
 
   const [material, setMaterial] = useState(initialMaterial);
 
@@ -42,7 +42,7 @@ export default function ItemPage({ params }: { params: { id: string } }) {
 
   const seller = useMemo(() => {
     if (!material) return null;
-    return users.find((u) => u.id === material.sellerId);
+    return users.find((u) => u.id === material.ownerId);
   }, [material]);
   
   const isBiddingEnabled = material?.enableBidding && material.auctionEndDate && !isNaN(new Date(material.auctionEndDate).getTime());
@@ -130,13 +130,13 @@ export default function ItemPage({ params }: { params: { id: string } }) {
     };
     setMaterial(updatedMaterial);
 
-    toast({ title: 'Bid Placed!', description: `You successfully bid $${bidValue.toFixed(2)} on ${material.name}.`, className: 'bg-primary text-primary-foreground' });
+    toast({ title: 'Bid Placed!', description: `You successfully bid $${bidValue.toFixed(2)} on ${material.title}.`, className: 'bg-primary text-primary-foreground' });
     setBidAmount('');
   };
 
   const handleBuyNow = () => {
     if (!material) return;
-    toast({ title: 'Purchase Successful!', description: `You have purchased ${material.name} for $${material.price.toFixed(2)}.`, className: 'bg-primary text-primary-foreground'});
+    toast({ title: 'Purchase Successful!', description: `You have purchased ${material.title} for $${material.price.toFixed(2)}.`, className: 'bg-primary text-primary-foreground'});
   };
 
   if (!material || !seller) {
@@ -148,12 +148,12 @@ export default function ItemPage({ params }: { params: { id: string } }) {
       <div className="md:col-span-2">
         <Carousel className="w-full">
           <CarouselContent>
-            {material.images.map((src, index) => (
+            {material.photos.map((src, index) => (
               <CarouselItem key={index}>
                 <Card className="overflow-hidden">
                   <Image
                     src={src}
-                    alt={`${material.name} image ${index + 1}`}
+                    alt={`${material.title} image ${index + 1}`}
                     width={800}
                     height={600}
                     className="w-full h-auto object-cover aspect-[4/3]"
@@ -228,7 +228,7 @@ export default function ItemPage({ params }: { params: { id: string } }) {
           <Card>
             <CardHeader>
               <Badge className="w-fit mb-2" variant={material.condition === 'Reclaimed' ? 'default' : 'secondary'}>{material.condition}</Badge>
-              <h1 className="text-3xl font-bold font-headline">{material.name}</h1>
+              <h1 className="text-3xl font-bold font-headline">{material.title}</h1>
               <p className="text-sm text-muted-foreground">{material.location}</p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -298,7 +298,7 @@ export default function ItemPage({ params }: { params: { id: string } }) {
           <Card>
             <CardHeader>
               <Badge className="w-fit mb-2" variant={material.condition === 'Reclaimed' ? 'default' : 'secondary'}>{material.condition}</Badge>
-              <h1 className="text-3xl font-bold font-headline">{material.name}</h1>
+              <h1 className="text-3xl font-bold font-headline">{material.title}</h1>
               <p className="text-sm text-muted-foreground">{material.location}</p>
               <p className="text-4xl font-bold text-primary pt-2">${material.price.toFixed(2)}</p>
             </CardHeader>

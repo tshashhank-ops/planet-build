@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { materials } from '@/lib/mock-data';
+// import { posts } from '@/lib/mock-data';
 import { getSellerSuggestions } from '../actions';
 import { useState, useEffect } from 'react';
 import { Loader2, Sparkles, CalendarIcon } from 'lucide-react';
@@ -39,6 +39,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
+import type { Post } from '@/lib/types';
+
+interface SellFormProps {
+  post: Post | null;
+  mode: 'edit' | 'create';
+  onSuccess: () => void;
+}
 
 const formSchema = z.object({
   name: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -68,7 +75,7 @@ const formSchema = z.object({
     path: ["enableBidding"],
 });
 
-export default function SellForm() {
+export default function SellForm({ post, mode, onSuccess }: SellFormProps) {
   const [isSuggesting, setIsSuggesting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -111,15 +118,46 @@ export default function SellForm() {
     }
   }, [enableBidding, form]);
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log(values);
-    toast({
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: values.name,
+          description: values.description,
+          category: values.category,
+          condition: values.condition,
+          quantity: Number(values.quantity), // ensure number
+          price: Number(values.price),       // ensure number
+          location: values.location,
+          dimensions: values.dimensions,
+          weight: values.weight,
+          incoterms: values.incoterms,
+          hsCode: values.hsCode,
+          specialHandling: values.specialHandling,
+          enableBidding: values.enableBidding,
+          startingBid: values.startingBid ? Number(values.startingBid) : undefined,
+          auctionEndDate: values.auctionEndDate ? new Date(values.auctionEndDate).toISOString() : undefined,
+          // Add owner/user if needed
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to create listing');
+      toast({
         title: "Listing Created!",
         description: "Your material has been successfully listed on the marketplace.",
         variant: 'default',
         className: 'bg-primary text-primary-foreground'
-    });
-    form.reset();
+      });
+      form.reset();
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Could not create listing.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleSuggestion = async () => {
@@ -155,9 +193,24 @@ export default function SellForm() {
     }
   };
 
-  const categories = [
-    ...new Set(materials.map((material) => material.category)),
-  ];
+  // Fetch unique categories from all posts
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch('/api/posts');
+        if (!res.ok) throw new Error('Failed to fetch posts');
+        const data = await res.json();
+        const posts = data.data || [];
+        const uniqueCategories: any[] = [...new Set(posts.map((post: any) => typeof post.category === 'string' ? post.category.trim() : '').filter((cat: any) => !!cat))];
+        setCategories(uniqueCategories);
+      } catch {
+        setCategories([]);
+      }
+    }
+    fetchCategories();
+  }, []);
 
   if (!user) {
     return (
@@ -315,12 +368,18 @@ export default function SellForm() {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>{enableBidding ? 'Buy Now Price ($)' : 'Price ($)'}</FormLabel>
-                     <div className="relative">
+                    <div className="relative">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
                         <FormControl>
-                            <Input type="number" placeholder="99.99" className="pl-7" {...field} />
+                            <Input
+                              type="number"
+                              placeholder="99.99"
+                              className="pl-7"
+                              value={field.value ?? ''}
+                              onChange={field.onChange}
+                            />
                         </FormControl>
-                     </div>
+                    </div>
                     <FormMessage />
                     </FormItem>
                 )}
@@ -470,11 +529,17 @@ export default function SellForm() {
                     <div className="relative">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
                         <FormControl>
-                            <Input type="number" placeholder="50.00" className="pl-7" {...field} />
+                            <Input
+                              type="number"
+                              placeholder="50.00"
+                              className="pl-7"
+                              value={field.value ?? ''}
+                              onChange={field.onChange}
+                            />
                         </FormControl>
                     </div>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
                 />
                 <FormField
@@ -485,35 +550,35 @@ export default function SellForm() {
                     <FormLabel>Auction End Date</FormLabel>
                     <Popover>
                         <PopoverTrigger asChild>
-                        <FormControl>
+                          <FormControl>
                             <Button
-                            variant={"outline"}
-                            className={cn(
+                              variant={"outline"}
+                              className={cn(
                                 "w-full pl-3 text-left font-normal",
                                 !field.value && "text-muted-foreground"
-                            )}
+                              )}
                             >
-                            {field.value ? (
+                              {field.value ? (
                                 format(field.value, "PPP")
-                            ) : (
+                              ) : (
                                 <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
-                        </FormControl>
+                          </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
+                          <Calendar
                             mode="single"
-                            selected={field.value}
+                            selected={field.value ?? undefined}
                             onSelect={field.onChange}
                             disabled={(date) =>
-                            date < new Date() || date < new Date("1900-01-01")
+                              date < new Date() || date < new Date("1900-01-01")
                             }
                             initialFocus
-                        />
+                          />
                         </PopoverContent>
-                    </Popover>
+                      </Popover>
                     <FormMessage />
                     </FormItem>
                 )}

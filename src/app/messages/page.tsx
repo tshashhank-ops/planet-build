@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { conversations, users, materials } from '@/lib/mock-data';
+import { conversations, users, posts } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import { Send, Sparkles, Loader2, MessageSquare, ShieldCheck } from 'lucide-react';
 import type { Message, Conversation, User } from '@/lib/types';
@@ -69,7 +69,7 @@ export default function MessagesPage() {
         if (!selectedConversation) return;
         
         // Find a material from the seller to use as context for the AI
-        const materialContext = materials.find(m => m.sellerId === selectedConversation.participant.id);
+        const materialContext = posts.find(m => m.ownerId === selectedConversation.participant.id);
         if (!materialContext) {
             toast({
                 title: 'Cannot Generate Draft',
@@ -84,7 +84,7 @@ export default function MessagesPage() {
             const result = await getDraftMessage({
                 userIntent: intent,
                 sellerName: selectedConversation.participant.name,
-                materialName: materialContext.name,
+                materialName: materialContext.title,
             });
             if (result.messageDraft) {
                 setNewMessage(result.messageDraft);

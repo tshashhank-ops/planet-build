@@ -1,15 +1,15 @@
 'use client';
 
 import { useMemo } from 'react';
-import { materials } from '@/lib/mock-data';
+import { posts } from '@/lib/mock-data';
 import { Shapes } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from './ui/button';
 
 export default function TopCategories() {
   const topCategories = useMemo(() => {
-    const categoryCounts = materials.reduce((acc, material) => {
-      acc[material.category] = (acc[material.category] || 0) + 1;
+    const categoryCounts = posts.reduce((acc, post) => {
+      acc[post.category] = (acc[post.category] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 

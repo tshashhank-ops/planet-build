@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { materials, tradeLeads } from '@/lib/mock-data';
+import { posts, tradeLeads } from '@/lib/mock-data';
 import { getTradeLeadMatches } from '@/app/actions';
 import { useState, useEffect } from 'react';
 import { Loader2, Sparkles, CalendarIcon, Briefcase } from 'lucide-react';
@@ -133,7 +133,7 @@ export default function PostLeadForm() {
   };
 
   const categories = [
-    ...new Set(materials.map((material) => material.category)),
+    ...new Set(posts.map((post) => post.category)),
   ];
 
   if (!user) {
