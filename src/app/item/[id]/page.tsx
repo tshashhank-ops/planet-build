@@ -1,10 +1,10 @@
 'use client';
 
-import { use, useMemo, useState, useEffect } from 'react';
+import { use, useMemo, useState, useEffect, Key } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { posts, users } from '@/lib/mock-data';
+// import { posts, users } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,28 +22,37 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import type { Bid } from '@/lib/types';
+import { StaticImport } from 'next/dist/shared/lib/get-img-props';
+import type { User } from '@/lib/types';
 
 export default function ItemPage({ params }: { params: { id: string } }) {
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
-  
-  const itemId = parseInt(params.id, 10);
-  const initialMaterial = useMemo(() => posts.find((m) => m.id === itemId), [itemId]);
-
-  const [material, setMaterial] = useState(initialMaterial);
-
-  if (!initialMaterial) {
-    notFound();
-  }
+  const [material, setMaterial] = useState<any | null>(null);
+  const [seller, setSeller] = useState<any | null>(null);
 
   useEffect(() => {
-    setMaterial(initialMaterial);
-  }, [initialMaterial]);
-
-  const seller = useMemo(() => {
-    if (!material) return null;
-    return users.find((u) => u.id === material.ownerId);
-  }, [material]);
+    async function fetchPostAndSeller() {
+      if (!params.id) return;
+      const postRes = await fetch(`/api/posts/${params.id}`);
+      if (!postRes.ok) return setMaterial(null);
+      const postData = await postRes.json();
+      const post = postData.data;
+      setMaterial(post);
+      if (post?.owner) {
+        const orgRes = await fetch(`/api/organisations/${post.owner}`);
+        if (orgRes.ok) {
+          const orgData = await orgRes.json();
+          setSeller(orgData.data);
+        } else {
+          setSeller(null);
+        }
+      } else {
+        setSeller(null);
+      }
+    }
+    fetchPostAndSeller();
+  }, [params.id]);
   
   const isBiddingEnabled = material?.enableBidding && material.auctionEndDate && !isNaN(new Date(material.auctionEndDate).getTime());
 
@@ -53,7 +62,7 @@ export default function ItemPage({ params }: { params: { id: string } }) {
     if (bids.length === 0) {
         return material.startingBid || 0;
     }
-    return Math.max(...bids.map(b => b.amount), material.startingBid || 0);
+    return Math.max(...bids.map((b:any) => b.amount), material.startingBid || 0);
   }, [isBiddingEnabled, material]);
 
   const [timeLeft, setTimeLeft] = useState('');
@@ -119,7 +128,7 @@ export default function ItemPage({ params }: { params: { id: string } }) {
     if (!material) return;
 
     const newBid: Bid = {
-        userId: currentUser.id,
+        userId: currentUser._id,
         amount: bidValue,
         timestamp: new Date().toISOString(),
     };
@@ -139,8 +148,8 @@ export default function ItemPage({ params }: { params: { id: string } }) {
     toast({ title: 'Purchase Successful!', description: `You have purchased ${material.title} for $${material.price.toFixed(2)}.`, className: 'bg-primary text-primary-foreground'});
   };
 
-  if (!material || !seller) {
-    return notFound();
+  if (material === null) {
+    return <p>Loading...</p>; 
   }
 
   return (
@@ -148,7 +157,7 @@ export default function ItemPage({ params }: { params: { id: string } }) {
       <div className="md:col-span-2">
         <Carousel className="w-full">
           <CarouselContent>
-            {material.photos.map((src, index) => (
+            {material.photos.map((src: string | StaticImport, index: number) => (
               <CarouselItem key={index}>
                 <Card className="overflow-hidden">
                   <Image
@@ -185,7 +194,7 @@ export default function ItemPage({ params }: { params: { id: string } }) {
                     {Object.entries(material.specs).map(([key, value]) => (
                         <div key={key}>
                             <p className="font-semibold">{key}</p>
-                            <p className="text-muted-foreground">{value}</p>
+                            <p className="text-muted-foreground">{String(value)}</p>
                         </div>
                     ))}
                     {material.dimensions && (
@@ -227,7 +236,7 @@ export default function ItemPage({ params }: { params: { id: string } }) {
         {isBiddingEnabled ? (
           <Card>
             <CardHeader>
-              <Badge className="w-fit mb-2" variant={material.condition === 'Reclaimed' ? 'default' : 'secondary'}>{material.condition}</Badge>
+              <Badge className="w-fit mb-2" variant={material.condition === 'reclaimed' ? 'default' : 'secondary'}>{material.condition}</Badge>
               <h1 className="text-3xl font-bold font-headline">{material.title}</h1>
               <p className="text-sm text-muted-foreground">{material.location}</p>
             </CardHeader>
@@ -297,7 +306,7 @@ export default function ItemPage({ params }: { params: { id: string } }) {
         ) : (
           <Card>
             <CardHeader>
-              <Badge className="w-fit mb-2" variant={material.condition === 'Reclaimed' ? 'default' : 'secondary'}>{material.condition}</Badge>
+              <Badge className="w-fit mb-2" variant={material.condition === 'reclaimed' ? 'default' : 'secondary'}>{material.condition}</Badge>
               <h1 className="text-3xl font-bold font-headline">{material.title}</h1>
               <p className="text-sm text-muted-foreground">{material.location}</p>
               <p className="text-4xl font-bold text-primary pt-2">${material.price.toFixed(2)}</p>
@@ -325,21 +334,23 @@ export default function ItemPage({ params }: { params: { id: string } }) {
             <CardTitle>Sold By</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={seller.avatar} alt={seller.name} data-ai-hint={seller.dataAiHint} />
-                <AvatarFallback>{seller.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <Link href={`/profile/${seller.id}`} className="font-bold text-lg hover:underline">
-                  {seller.name}
-                </Link>
-                <div className="flex items-center gap-1 text-sm">
-                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                  <span>{seller.rating} ({seller.reviews.length} reviews)</span>
+            {seller && Array.isArray(seller.users) && seller.users.length > 0 && seller.users[0] && (
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={seller.users[0].avatar} alt={seller.users[0].name} data-ai-hint={seller.users[0].dataAiHint} />
+                  <AvatarFallback>{seller.users[0].name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <Link href={`/profile/${seller.users[0]._id}`} className="font-bold text-lg hover:underline">
+                    {seller.users[0].name}
+                  </Link>
+                  <div className="flex items-center gap-1 text-sm">
+                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                    <span>{seller.users[0].rating} ({Array.isArray(seller.users[0].reviews) ? seller.users[0].reviews.length : 0} reviews)</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>

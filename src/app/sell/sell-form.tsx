@@ -231,7 +231,7 @@ export default function SellForm({ post, mode, onSuccess }: SellFormProps) {
           </Avatar>
           <div>
             <p className="text-sm text-muted-foreground">You are listing as:</p>
-            <Link href={`/profile/${user.id}`} className="font-semibold hover:underline">
+            <Link href={`/profile/${user._id}`} className="font-semibold hover:underline">
                 {user.name}
             </Link>
           </div>

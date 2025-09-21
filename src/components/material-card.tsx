@@ -19,7 +19,7 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const seller = users.find((u) => u.id === post.ownerId);
+  const seller = users.find((u) => u._id === post.owner);
   const shortDescription =
     post.description.length > 120
       ? `${post.description.substring(0, 120)}...`
@@ -29,16 +29,16 @@ export default function PostCard({ post }: PostCardProps) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Link href={`/item/${post.id}`} className="group">
+          <Link href={`/item/${post._id}`} className="group">
             <Card className="overflow-hidden h-full flex flex-col transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:-translate-y-1">
               <CardHeader className="p-0 relative">
                 <Badge
                   className="absolute top-2 right-2 z-10"
                   variant={
-                    post.condition === 'Reclaimed' ? 'default' : 'secondary'
+                    post.condition === 'reclaimed' ? 'default' : 'secondary'
                   }
                   style={
-                    post.condition === 'Reclaimed'
+                    post.condition === 'reclaimed'
                       ? {
                           backgroundColor: 'hsl(var(--primary))',
                           color: 'hsl(var(--primary-foreground))',

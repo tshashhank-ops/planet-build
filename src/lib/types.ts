@@ -1,22 +1,21 @@
-
 export type Bid = {
-  userId: number;
+  userId: string; // MongoDB ObjectId as string
   amount: number;
   timestamp: string;
 };
 
 export type Post = {
-  id: number;
+  _id: string; // MongoDB ObjectId as string
   title: string;
   price: number;
   description: string;
-  condition: 'New' | 'Reclaimed';
+  condition: 'new' | 'reclaimed'; // match schema
   photos: string[];
-  ownerId: number;
+  owner?: string; // userId or organisationId as string
   category: string;
   location: string;
-  quantity: string;
-  specs: Record<string, string>;
+  quantity: number;
+  specs?: Record<string, string>;
   incoterms?: string;
   hsCode?: string;
   weight?: string;
@@ -27,46 +26,68 @@ export type Post = {
   auctionEndDate?: string;
   startingBid?: number;
   bidHistory?: Bid[];
+  createdAt: string;
 };
 
 export type Review = {
-  id: number;
-  authorId: number;
+  _id: string;
+  authorId: string;
   rating: number;
   comment: string;
   date: string;
 };
 
 export type User = {
-  id: number;
+  _id: string;
   name: string;
   email: string;
-  password?: string;
-  avatar: string;
-  rating: number;
-  memberSince: string;
-  reviews: Review[];
+  passwordHash: string;
+  avatar?: string;
+  role: 'buyer' | 'seller' | 'staff';
+  organisation?: string; // org id
+  rating?: number;
+  memberSince?: string;
+  reviews?: Review[];
   badges: string[];
   carbonCredits: number;
   dataAiHint?: string;
+  createdAt: string;
+};
+
+export type UserInConversation = {
+  userId: string;
+  isActive: boolean;
+  joinedAt: string; 
+};
+
+export type Conversation = {
+  _id: string;
+  isActive: boolean;
+  users: UserInConversation[];
+  createdAt: string;
+  updatedAt: string;
+  lastMessage?: Message;
+  unreadCount: number;
 };
 
 export type Message = {
-    id: number;
-    senderId: number;
-    text: string;
-    timestamp: string;
-}
-
-export type Conversation = {
-    id: number;
-    participant: User;
-    lastMessage: Message;
-    unreadCount: number;
-}
+  _id: string;
+  conversationId: string;
+  sentUserId: string;
+  text?: string;
+  media?: string;
+  isEdited: boolean;
+  isDeleted: boolean;
+  deliveredTo: string[]; // array of user IDs
+  readBy: string[]; // array of user IDs
+  reaction: Record<string, number>; // e.g., { like: 2, love: 1 }
+  messageReplyTo?: string; // optional reference to another message
+  createdAt: string;
+  updatedAt: string;
+};
 
 export type TradeLeadBid = {
-  userId: number;
+  userId: string;
   pricePerUnit: number;
   timestamp: string;
   volume?: number;
@@ -76,7 +97,7 @@ export type TradeLead = {
   id: number;
   type: 'buy' | 'sell';
   contractType?: 'volume' | 'fixed';
-  userId: number;
+  userId: string;
   materialName: string;
   category: string;
   description: string;

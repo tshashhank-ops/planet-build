@@ -47,7 +47,7 @@ export default function LoginPage() {
           title: 'Login Successful',
           description: `Welcome back, ${user.name}!`,
         });
-        router.push('/marketplace');
+        router.push(`/profile/${user._id}`);
       } else {
         toast({
           title: 'Login Failed',

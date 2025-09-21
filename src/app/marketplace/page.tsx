@@ -15,7 +15,7 @@ import {
 import { Search, List, Map, Briefcase, ShoppingCart, PlusCircle } from 'lucide-react';
 import PostCard from '@/components/post-card';
 import TradeLeadCard from '@/components/trade-lead-card';
-import { tradeLeads as allLeads, users } from '@/lib/mock-data';
+// import { tradeLeads as allLeads, users } from '@/lib/mock-data';
 import AiSuggestions from '@/components/ai-suggestions';
 import type { Post, TradeLead } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -35,6 +35,27 @@ function MarketplacePageContent() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editPost, setEditPost] = useState<Post | null>(null);
     const [loading, setLoading] = useState(false);
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [users, setUsers] = useState<any[]>([]);
+    const [tradeLeads, setTradeLeads] = useState<any[]>([]);
+
+    useEffect(() => {
+        async function fetchData() {
+            const postsRes = await fetch('/api/posts');
+            const postsData = await postsRes.json();
+            setPosts(postsData.data || []);
+
+            const usersRes = await fetch('/api/users');
+            const usersData = await usersRes.json();
+            setUsers(usersData.data || []);
+
+            const leadsRes = await fetch('/api/trade-leads');
+            const leadsData = await leadsRes.json();
+            setTradeLeads(leadsData.data || []);
+        }
+        fetchData();
+    }, []);
+
     const openModal = (post: Post) => {
         setEditPost(post);
         setModalOpen(true);
@@ -45,7 +66,7 @@ function MarketplacePageContent() {
         if (!window.confirm('Delete this post?')) return;
         setLoading(true);
         try {
-            const postId = post.id || (post as any)._id;
+            const postId = post._id || (post as any)._id;
             if (!postId) {
                 alert('Post ID not found.');
                 setLoading(false);
@@ -72,8 +93,8 @@ function MarketplacePageContent() {
   const [submittedSearch, setSubmittedSearch] = useState('');
   
   // State for Trade Leads
-  const buyLeads = allLeads.filter(lead => lead.type === 'buy');
-  const sellLeads = allLeads.filter(lead => lead.type === 'sell');
+  const buyLeads = tradeLeads.filter((lead: TradeLead) => lead.type === 'buy');
+  const sellLeads = tradeLeads.filter((lead: TradeLead) => lead.type === 'sell');
 
     useEffect(() => {
         setCategory(urlCategory || 'all');
@@ -229,7 +250,7 @@ function MarketplacePageContent() {
                                 </DialogHeader>
                                 {editPost && (
                                     <SellForm
-                                        key={editPost.id}
+                                        key={editPost._id}
                                         post={editPost}
                                         mode="edit"
                                         onSuccess={() => {
@@ -260,11 +281,11 @@ function MarketplacePageContent() {
                                                 {filteredPosts.length > 0 ? (
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                                         {filteredPosts.map((post) => (
-                                                            <div key={post.id} className="relative group">
+                                                            <div key={post._id} className="relative group">
                                                                 <PostCard post={post} />
-                                                                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition">
-                                                                    <Button size="sm" variant="outline" onClick={() => openModal(post)}>Edit</Button>
-                                                                    <Button size="sm" variant="destructive" onClick={() => handleDelete(post)}>Delete</Button>
+                                                                <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                                                                    <Button className='bg-gray-50 hover:bg-green-500 material-icons text-black' size="icon" variant="outline" onClick={() => openModal(post)}>&#xe3c9;</Button>
+                                                                    <Button className='bg-red-600 hover:bg-red-800 text-white material-icons rounded-lg' size="icon" variant="destructive" onClick={() => handleDelete(post)}>&#xe872;</Button>
                                                                 </div>
                                                             </div>
                                                         ))}

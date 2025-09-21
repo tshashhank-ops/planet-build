@@ -1,5 +1,5 @@
 
-import type { Post, User, Review, Conversation, Bid, TradeLead } from './types';
+import type { Post, User, Review, Conversation, Bid, TradeLead, Message } from './types';
 
 export const users: User[] = [
   {
@@ -7,7 +7,7 @@ export const users: User[] = [
     name: 'GreenBuild Co.',
     email: 'contact@greenbuild.co',
     password: 'password123',
-    avatar: 'https://placehold.co/100x100.png?text=G',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Robin',
     rating: 4.8,
     memberSince: '2022-03-15',
     reviews: [
@@ -23,7 +23,7 @@ export const users: User[] = [
     name: 'Eco Renovations',
     email: 'info@ecorenovations.com',
     password: 'password123',
-    avatar: 'https://placehold.co/100x100.png?text=E',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Charlie',
     rating: 4.5,
     memberSince: '2021-11-01',
     reviews: [
@@ -38,7 +38,7 @@ export const users: User[] = [
     name: 'Modern Homes LLC',
     email: 'sales@modernhomes.llc',
     password: 'password123',
-    avatar: 'https://placehold.co/100x100.png?text=M',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice',
     rating: 4.9,
     memberSince: '2023-01-20',
     reviews: [],
@@ -51,10 +51,10 @@ export const users: User[] = [
 export const posts: Post[] = [
   {
     id: 1,
-  title: 'Reclaimed Douglas Fir Beams',
+  title: 'reclaimed Douglas Fir Beams',
     price: 2500.00,
     description: 'Beautiful, dense Douglas Fir beams salvaged from a 1920s warehouse. Perfect for mantels, exposed rafters, or structural use. Rich patina and history in every piece.',
-    condition: 'Reclaimed',
+    condition: 'reclaimed',
   photos: ['https://placehold.co/600x400.png', 'https://placehold.co/600x400.png'],
   ownerId: 1,
     category: 'Wood',
@@ -96,7 +96,7 @@ export const posts: Post[] = [
   title: 'Vintage Red Bricks (Lot of 2000)',
     price: 1200.00,
     description: 'Classic red clay bricks from a historic downtown building. Ideal for accent walls, patios, or garden paths. This listing is for the entire lot of approximately 2000 bricks.',
-    condition: 'Reclaimed',
+    condition: 'reclaimed',
   photos: ['https://placehold.co/600x400.png'],
   ownerId: 2,
     category: 'Masonry',
@@ -134,7 +134,7 @@ export const posts: Post[] = [
   title: 'Salvaged Maple Flooring (500 sq. ft.)',
     price: 3500.00,
     description: 'Hard maple tongue-and-groove flooring from a retired gymnasium. Shows character marks and original court lines in some sections. This listing is for the entire lot of 500 sq. ft.',
-    condition: 'Reclaimed',
+    condition: 'reclaimed',
   photos: ['https://placehold.co/600x400.png', 'https://placehold.co/600x400.png'],
   ownerId: 2,
     category: 'Flooring',
@@ -169,7 +169,7 @@ export const posts: Post[] = [
   title: 'Antique Clawfoot Bathtub',
     price: 400.00,
     description: 'Beautifully preserved cast iron clawfoot tub from the early 20th century. Recently reglazed. A stunning centerpiece for any bathroom renovation.',
-    condition: 'Reclaimed',
+    condition: 'reclaimed',
   photos: ['https://placehold.co/600x400.png'],
   ownerId: 2,
     category: 'Plumbing & Fixtures',
@@ -219,10 +219,10 @@ export const posts: Post[] = [
   },
   {
     id: 10,
-  title: 'Reclaimed Granite Pavers',
+  title: 'reclaimed Granite Pavers',
     price: 8.00,
     description: 'Durable and beautiful granite pavers salvaged from a city plaza renovation. Perfect for patios, walkways, or driveways. Price per paver.',
-    condition: 'Reclaimed',
+    condition: 'reclaimed',
   photos: ['https://placehold.co/600x400.png'],
   ownerId: 2,
     category: 'Hardscaping',
@@ -252,7 +252,7 @@ export const posts: Post[] = [
   title: 'Upcycled Leather Off-cuts',
     price: 45.00,
     description: 'A mixed box of genuine leather off-cuts from a luxury handbag maker. Various colors and textures. Perfect for crafting, jewelry, and small leather goods.',
-    condition: 'Reclaimed',
+    condition: 'reclaimed',
   photos: ['https://placehold.co/600x400.png'],
   ownerId: 1,
     category: 'Leather Hides',
@@ -280,7 +280,7 @@ export const posts: Post[] = [
   title: 'Salvaged CPU Chips (Lot of 50)',
     price: 200.00,
     description: 'A lot of 50 assorted CPU chips, carefully extracted from decommissioned servers and desktop computers. For gold recovery, art projects, or collectors.',
-    condition: 'Reclaimed',
+    condition: 'reclaimed',
   photos: ['https://placehold.co/600x400.png'],
   ownerId: 3,
     category: 'Semiconductors',
@@ -295,7 +295,7 @@ export const posts: Post[] = [
   title: 'Used All-Season Tires (Set of 4)',
     price: 180.00,
     description: 'A set of four gently used all-season tires with significant tread life remaining. Size: 225/65R17. No patches or plugs.',
-    condition: 'Reclaimed',
+    condition: 'reclaimed',
   photos: ['https://placehold.co/600x400.png'],
   ownerId: 1,
     category: 'Tires & Wheels',
@@ -309,7 +309,7 @@ export const posts: Post[] = [
   title: 'Remanufactured Alternator',
     price: 90.00,
     description: 'Professionally remanufactured alternator for late model Ford F-150 trucks (2015-2020). Tested and comes with a 90-day warranty.',
-    condition: 'Reclaimed',
+    condition: 'reclaimed',
   photos: ['https://placehold.co/600x400.png'],
   ownerId: 2,
     category: 'Engine Components',
@@ -335,18 +335,97 @@ export const posts: Post[] = [
 ];
 
 export const conversations: Conversation[] = [
-    {
-        id: 1,
-        participant: users[1],
-        lastMessage: { id: 1, senderId: 2, text: "Yes, they are still available. When would you like to see them?", timestamp: new Date(Date.now() - 10 * 60000).toISOString() },
-        unreadCount: 1,
+  {
+    _id: 'c1',
+    isActive: true,
+    users: [
+      { userId: users[0]._id, isActive: true, joinedAt: new Date(Date.now() - 3600000).toISOString() },
+      { userId: users[1]._id, isActive: true, joinedAt: new Date(Date.now() - 3500000).toISOString() },
+    ],
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    updatedAt: new Date().toISOString(),
+    lastMessage: {
+      _id: 'm1',
+      conversationId: 'c1',
+      sentUserId: users[1]._id,
+      text: 'Yes, the project files are ready for review. When can we meet?',
+      isEdited: false,
+      isDeleted: false,
+      deliveredTo: [users[0]._id, users[1]._id],
+      readBy: [users[0]._id],
+      reaction: {},
+      createdAt: new Date(Date.now() - 10 * 60000).toISOString(),
+      updatedAt: new Date(Date.now() - 10 * 60000).toISOString(),
     },
-    {
-        id: 2,
-        participant: users[2],
-        lastMessage: { id: 2, senderId: 1, text: "Great, I can pick them up tomorrow around 5 PM.", timestamp: new Date(Date.now() - 24 * 60 * 60000).toISOString() },
-        unreadCount: 0,
-    }
+    unreadCount: 1,
+  },
+  {
+    _id: 'c2',
+    isActive: true,
+    users: [
+      { userId: users[0]._id, isActive: true, joinedAt: new Date(Date.now() - 7200000).toISOString() },
+      { userId: users[2]._id, isActive: true, joinedAt: new Date(Date.now() - 7100000).toISOString() },
+    ],
+    createdAt: new Date(Date.now() - 7200000).toISOString(),
+    updatedAt: new Date().toISOString(),
+    lastMessage: {
+      _id: 'm2',
+      conversationId: 'c2',
+      sentUserId: users[0]._id,
+      text: 'Great, I can pick up the documents tomorrow afternoon.',
+      isEdited: false,
+      isDeleted: false,
+      deliveredTo: [users[0]._id, users[2]._id],
+      readBy: [users[0]._id],
+      reaction: {},
+      createdAt: new Date(Date.now() - 24 * 60 * 60000).toISOString(),
+      updatedAt: new Date(Date.now() - 24 * 60 * 60000).toISOString(),
+    },
+    unreadCount: 1,
+  },
+];
+
+// Messages
+export const messages: Message[] = [
+  {
+    _id: 'm1',
+    conversationId: 'c1',
+    sentUserId: users[0]._id,
+    text: 'Hello, are the project files ready for review?',
+    isEdited: false,
+    isDeleted: false,
+    deliveredTo: [users[0]._id, users[1]._id],
+    readBy: [users[0]._id],
+    reaction: {},
+    createdAt: new Date(Date.now() - 15 * 60000).toISOString(),
+    updatedAt: new Date(Date.now() - 15 * 60000).toISOString(),
+  },
+  {
+    _id: 'm2',
+    conversationId: 'c1',
+    sentUserId: users[1]._id,
+    text: 'Yes, the project files are ready for review. When can we meet?',
+    isEdited: false,
+    isDeleted: false,
+    deliveredTo: [users[0]._id, users[1]._id],
+    readBy: [users[0]._id],
+    reaction: {},
+    createdAt: new Date(Date.now() - 10 * 60000).toISOString(),
+    updatedAt: new Date(Date.now() - 10 * 60000).toISOString(),
+  },
+  {
+    _id: 'm3',
+    conversationId: 'c2',
+    sentUserId: users[0]._id,
+    text: 'Great, I can pick up the documents tomorrow afternoon.',
+    isEdited: false,
+    isDeleted: false,
+    deliveredTo: [users[0]._id, users[2]._id],
+    readBy: [users[0]._id],
+    reaction: {},
+    createdAt: new Date(Date.now() - 24 * 60 * 60000).toISOString(),
+    updatedAt: new Date(Date.now() - 24 * 60 * 60000).toISOString(),
+  },
 ];
 
 export const tradeLeads: TradeLead[] = [

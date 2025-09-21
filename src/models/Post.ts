@@ -29,7 +29,7 @@ const PostSchema: Schema<IPost> = new Schema({
   price: { type: Number, required: true },
   quantity: { type: Number, required: true },
   location: { type: String, required: true },
-  owner: { type: Schema.Types.ObjectId, ref: 'User', required: false },
+  owner: { type: Schema.Types.ObjectId, ref: 'Organisation', required: false },
   photos: [{ type: String, default: ['https://placehold.co/600x400.png'] }],
   createdAt: { type: Date, default: Date.now },
   dimensions: { type: String },

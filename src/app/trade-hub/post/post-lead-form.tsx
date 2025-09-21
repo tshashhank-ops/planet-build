@@ -156,7 +156,7 @@ export default function PostLeadForm() {
           </Avatar>
           <div>
             <p className="text-sm text-muted-foreground">You are posting as:</p>
-            <Link href={`/profile/${user.id}`} className="font-semibold hover:underline">
+            <Link href={`/profile/${user._id}`} className="font-semibold hover:underline">
                 {user.name}
             </Link>
           </div>
@@ -432,7 +432,7 @@ export default function PostLeadForm() {
             </Alert>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {matchedLeads.map(lead => (
-                    <TradeLeadCard key={lead.id} lead={lead} user={users.find(u => u.id === lead.userId)} />
+                    <TradeLeadCard key={lead.id} lead={lead} user={users.find(u => u._id === lead.userId)} />
                 ))}
             </div>
              <div className="text-center pt-4">

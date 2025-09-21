@@ -61,7 +61,7 @@ export default function Header() {
                     <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link href={`/profile/${user.id}`}>
+                      <Link href={`/profile/${user._id}`}>
                         <User className="mr-2 h-4 w-4" />
                         <span>Profile</span>
                       </Link>

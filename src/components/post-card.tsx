@@ -4,7 +4,8 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Post } from '@/lib/types';
-import { users } from '@/lib/mock-data';
+import React from 'react';
+// import { users } from '@/lib/mock-data';
 import {
   Tooltip,
   TooltipContent,
@@ -19,7 +20,21 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const seller = users.find((u) => u.id === post.ownerId);
+  const [seller, setSeller] = React.useState<any | null>(null);
+  React.useEffect(() => {
+    async function fetchSeller() {
+      if (!post.owner) return setSeller(null);
+      try {
+        const res = await fetch(`/api/organisations/${post.owner}`);
+        if (!res.ok) return setSeller(null);
+        const data = await res.json();
+        setSeller(data.data || null);
+      } catch {
+        setSeller(null);
+      }
+    }
+    fetchSeller();
+  }, [post.owner]);
   const shortDescription =
     post.description.length > 120
       ? `${post.description.substring(0, 120)}...`
@@ -29,16 +44,16 @@ export default function PostCard({ post }: PostCardProps) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Link href={`/item/${post.id}`} className="group">
-            <Card className="overflow-hidden h-full flex flex-col transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:-translate-y-1">
+          <Link href={`/item/${post._id}`} className="group">
+            <Card className="overflow-hidden h-full flex flex-col transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:scale-105 group-hover:-translate-y-1">
               <CardHeader className="p-0 relative">
                 <Badge
                   className="absolute top-2 right-2 z-10"
                   variant={
-                    post.condition === 'Reclaimed' ? 'default' : 'secondary'
+                    post.condition === 'reclaimed' ? 'default' : 'secondary'
                   }
                   style={
-                    post.condition === 'Reclaimed'
+                    post.condition === 'reclaimed'
                       ? {
                           backgroundColor: 'hsl(var(--primary))',
                           color: 'hsl(var(--primary-foreground))',
@@ -48,13 +63,13 @@ export default function PostCard({ post }: PostCardProps) {
                 >
                   {post.condition}
                 </Badge>
-                <div className="aspect-w-16 aspect-h-9 overflow-hidden">
+                <div className="aspect-w-16 aspect-h-9  overflow-hidden">
                   <Image
-                    src={post.photos[0]}
+                    src={post.photos[0] || 'https://placehold.co/600x400.png'}
                     alt={post.title}
                     width={400}
                     height={300}
-                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                    className="object-cover w-full h-full transition-transform duration-100 group-hover:scale-105"
                     data-ai-hint={post.dataAiHint}
                   />
                 </div>
@@ -79,15 +94,15 @@ export default function PostCard({ post }: PostCardProps) {
                       : ''}
                   </p>
                 </div>
-                {seller && (
+                {seller && seller.users && seller.users[0] && (
                   <div className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={seller.avatar}
-                        alt={seller.name}
-                        data-ai-hint={seller.dataAiHint}
+                        src={seller.users[0].avatar}
+                        alt={seller.users[0].name}
+                        data-ai-hint={seller.users[0].dataAiHint}
                       />
-                      <AvatarFallback>{seller.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback>{seller.users[0].name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                   </div>
                 )}
@@ -101,13 +116,13 @@ export default function PostCard({ post }: PostCardProps) {
                 <p className="font-bold text-base">{post.title}</p>
                 <p className="text-sm text-muted-foreground">{shortDescription}</p>
               </div>
-              {seller && (
+              {seller && seller.users && seller.users[0] && (
                 <>
                   <Separator />
                   <div>
-                      <p className="text-xs font-semibold mb-1.5">Sold by {seller.name}</p>
+                      <p className="text-xs font-semibold mb-1.5">Sold by {seller.users[0].name}</p>
                       <div className="flex flex-wrap gap-1">
-                          {seller.badges.map(badge => <EcoBadge key={badge} badgeName={badge} />)}
+                          {(seller.users[0].badges || []).map((badge: string) => <EcoBadge key={badge} badgeName={badge} />)}
                       </div>
                   </div>
                 </>

@@ -16,20 +16,27 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  // In a real app, this would be managed on a server.
-  const [users, setUsers] = useState<User[]>(mockUsers);
   const router = useRouter();
 
   const login = useCallback(
     async (email: string, password: string): Promise<User | null> => {
-      const foundUser = users.find(u => u.email === email && u.password === password);
-      if (foundUser) {
-        setUser(foundUser);
-        return foundUser;
+      try {
+        const res = await fetch('/api/users/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (res.ok && data.success && data.data) {
+          setUser(data.data);
+          return data.data;
+        }
+        return null;
+      } catch {
+        return null;
       }
-      return null;
     },
-    [users]
+    []
   );
 
   const logout = useCallback(() => {
@@ -39,30 +46,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = useCallback(
     async (name: string, email: string, password: string): Promise<User | null> => {
-      const existingUser = users.find(u => u.email === email);
-      if (existingUser) {
-        return null; // User already exists
+      try {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, passwordHash: password, role: 'buyer' })
+        });
+        const data = await res.json();
+        if (res.ok && data.success && data.data) {
+          setUser(data.data);
+          return data.data;
+        }
+        return null;
+      } catch {
+        return null;
       }
-
-      const newUser: User = {
-        id: users.length + 1,
-        name,
-        email,
-        password,
-        avatar: `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
-        rating: 0,
-        memberSince: new Date().toISOString(),
-        reviews: [],
-        badges: [],
-        carbonCredits: 0,
-        dataAiHint: 'profile avatar',
-      };
-      
-      setUsers(prevUsers => [...prevUsers, newUser]);
-      setUser(newUser);
-      return newUser;
     },
-    [users]
+    []
   );
 
   return (

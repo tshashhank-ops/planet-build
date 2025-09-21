@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { Home, PlusCircle, MessageSquare, Leaf } from 'lucide-react';
+import { Home, PlusCircle, MessageSquare, Leaf, Star } from 'lucide-react';
 import Leaderboard from '../leaderboard';
 import TopCategories from '../top-categories';
 
@@ -27,6 +27,8 @@ export default function AppSidebar() {
 
   if (user) {
     menuItems.push({ href: '/messages', label: 'Messages', icon: MessageSquare });
+  menuItems.push({ href: `/profile/${user._id}/active-listings`, label: 'Active Listings', icon: PlusCircle });
+  menuItems.push({ href: `/profile/${user._id}/reviews`, label: 'Reviews', icon: Star });
   }
 
   return (
