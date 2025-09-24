@@ -1,16 +1,15 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-// ...existing code...
 import { cn } from '@/lib/utils';
 import { Send, Sparkles, Loader2, MessageSquare, ShieldCheck } from 'lucide-react';
-import type { Message, Conversation, User, Post } from '@/lib/types';
+import type { Message, Conversation, Post } from '@/lib/types';
 import { getDraftMessage } from '../actions';
 import {
   DropdownMenu,
@@ -22,124 +21,137 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { getSocket } from '@/lib/socket';
 
 // Fetch conversations and messages from backend API
-import { useEffect } from 'react';
-
 async function fetchConversations(userId: string) {
-    const res = await fetch(`/api/messages/conversations?userId=${userId}`);
-    const data = await res.json();
-    return data.success ? data.data : [];
+  const res = await fetch(`/api/messages/conversations?userId=${userId}`);
+  const data = await res.json();
+  return data.success ? data.data : [];
 }
 
 async function fetchMessages(conversationId: string) {
-    const res = await fetch(`/api/messages?conversationId=${conversationId}`);
-    const data = await res.json();
-    return data.success ? data.data : [];
+  const res = await fetch(`/api/messages?conversationId=${conversationId}`);
+  const data = await res.json();
+  return data.success ? data.data : [];
 }
+
 export default function MessagesPage() {
-    const { toast } = useToast();
-    const { user: currentUser } = useAuth();
-    const [conversations, setConversations] = useState<any[]>([]);
-    const [selectedConversation, setSelectedConversation] = useState<any | null>(null);
-    const [chatHistory, setChatHistory] = useState<any[]>([]);
-    const [newMessage, setNewMessage] = useState('');
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [posts, setPosts] = useState<Post[]>([]);
+  const { toast } = useToast();
+  const { user: currentUser } = useAuth();
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<any | null>(null);
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [posts, setPosts] = useState<Post[]>([]);
 
-    useEffect(() => {
-        if (currentUser?._id) {
-            fetchConversations(currentUser._id).then(setConversations);
-            fetch(`/api/posts?userId=${currentUser._id}`)
-                .then(res => res.json())
-                .then(data => setPosts(data.success ? data.data : []));
-        }
-    }, [currentUser]);
-
-    if (!currentUser) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <p>Please log in to view your messages.</p>
-            </div>
-        );
+  useEffect(() => {
+    if (currentUser?._id) {
+      fetchConversations(currentUser._id).then(setConversations);
+      fetch(`/api/posts?userId=${currentUser._id}`)
+        .then(res => res.json())
+        .then(data => setPosts(data.success ? data.data : []));
     }
-    
-    const handleSelectConversation = async (convo: any) => {
-        setSelectedConversation(convo);
-        const messages = await fetchMessages(convo._id);
-        setChatHistory(messages);
+  }, [currentUser]);
+
+  // ⬅️ socket listeners
+  useEffect(() => {
+    const socket = getSocket();
+
+    if (selectedConversation?._id) {
+      socket.emit('joinRoom', selectedConversation._id);
+
+      socket.on('newMessage', (msg: Message) => {
+        if (msg.conversationId === selectedConversation._id) {
+          setChatHistory(prev => [...prev, msg]);
+        }
+      });
+    }
+
+    return () => {
+      socket.off('newMessage');
+    };
+  }, [selectedConversation]);
+
+  if (!currentUser) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p>Please log in to view your messages.</p>
+      </div>
+    );
+  }
+
+  const handleSelectConversation = async (convo: any) => {
+    setSelectedConversation(convo);
+    const messages = await fetchMessages(convo._id);
+    setChatHistory(messages);
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedConversation || !currentUser) return;
+
+    const msg: Message = {
+      _id: Date.now().toString(), // temp id
+      conversationId: selectedConversation._id,
+      sentUserId: currentUser._id,
+      text: newMessage,
+      isEdited: false,
+      isDeleted: false,
+      deliveredTo: [],
+      readBy: [],
+      reaction: {},
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newMessage.trim() || !selectedConversation || !currentUser) return;
-        const body = {
-            conversationId: selectedConversation._id,
-            sentUserId: currentUser._id,
-            text: newMessage,
-            isEdited: false,
-            isDeleted: false,
-            deliveredTo: [],
-            readBy: [],
-            reaction: {},
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-        const res = await fetch('/api/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
+    const socket = getSocket();
+    socket.emit('sendMessage', msg);
+
+    setNewMessage('');
+  };
+
+  const handleGenerateDraft = async (intent: string) => {
+    if (!selectedConversation) return;
+
+    const materialContext = posts.find(m => m.owner === selectedConversation.participant.id);
+    if (!materialContext) {
+      toast({
+        title: 'Cannot Generate Draft',
+        description: 'Could not find a sample item from this seller to discuss.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const result = await getDraftMessage({
+        userIntent: intent,
+        sellerName: selectedConversation.participant.name,
+        materialName: materialContext.title,
+      });
+      if (result.messageDraft) {
+        setNewMessage(result.messageDraft);
+      } else {
+        toast({
+          title: 'Generation Failed',
+          description: 'The AI could not generate a message draft. Please try again.',
+          variant: 'destructive'
         });
-        const data = await res.json();
-        if (data.success) {
-            setChatHistory(prev => [...prev, data.data]);
-            setNewMessage('');
-        } else {
-            toast({ title: 'Error', description: 'Failed to send message', variant: 'destructive' });
-        }
-    };
-
-    const handleGenerateDraft = async (intent: string) => {
-        if (!selectedConversation) return;
-        
-        // Find a material from the seller to use as context for the AI
-        const materialContext = posts.find(m => m.owner === selectedConversation.participant.id);
-        if (!materialContext) {
-            toast({
-                title: 'Cannot Generate Draft',
-                description: 'Could not find a sample item from this seller to discuss.',
-                variant: 'destructive'
-            });
-            return;
-        }
-
-        setIsGenerating(true);
-        try {
-            const result = await getDraftMessage({
-                userIntent: intent,
-                sellerName: selectedConversation.participant.name,
-                materialName: materialContext.title,
-            });
-            if (result.messageDraft) {
-                setNewMessage(result.messageDraft);
-            } else {
-                toast({
-                    title: 'Generation Failed',
-                    description: 'The AI could not generate a message draft. Please try again.',
-                    variant: 'destructive'
-                });
-            }
-        } catch (error) {
-            console.error(error);
-             toast({
-                title: 'An Error Occurred',
-                description: 'Something went wrong while generating the message.',
-                variant: 'destructive'
-            });
-        } finally {
-            setIsGenerating(false);
-        }
-    };
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'An Error Occurred',
+        description: 'Something went wrong while generating the message.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <div className="h-[calc(100vh-12rem)]">

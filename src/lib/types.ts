@@ -1,3 +1,9 @@
+import type { NextApiRequest } from "next";
+import type { Server as HTTPServer } from "http";
+import type { Socket } from "net";
+import type { Server as IOServer } from "socket.io";
+
+
 export type Bid = {
   userId: string; // MongoDB ObjectId as string
   amount: number;
@@ -110,4 +116,24 @@ export type TradeLead = {
   timestamp: string;
   biddingEndDate: string;
   bids: TradeLeadBid[];
+};
+
+export interface SocketServer extends HTTPServer {
+  io?: IOServer;
+}
+
+export interface SocketWithIO extends Socket {
+  server: SocketServer;
+}
+
+export interface NextApiRequestWithSocket extends NextApiRequest {
+  socket: SocketWithIO;
+}
+
+export type Organisation = {
+  _id: string;
+  name: string;
+  members: User[];
+  createdAt: string;
+  updatedAt: string;
 };
