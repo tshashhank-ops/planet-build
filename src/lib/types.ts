@@ -76,6 +76,11 @@ export type Conversation = {
   unreadCount: number;
 };
 
+export type Reaction = {
+  emoji: string;
+  userId: string;
+};
+
 export type Message = {
   _id: string;
   conversationId: string;
@@ -86,8 +91,8 @@ export type Message = {
   isDeleted: boolean;
   deliveredTo: string[]; // array of user IDs
   readBy: string[]; // array of user IDs
-  reaction: Record<string, number>; // e.g., { like: 2, love: 1 }
-  messageReplyTo?: string; // optional reference to another message
+  reactions: Reaction[];
+  replyTo?: string; // optional reference to another message
   createdAt: string;
   updatedAt: string;
 };

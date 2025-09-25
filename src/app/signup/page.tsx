@@ -121,6 +121,15 @@ export default function SignupPage() {
               <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? 'Creating Account...' : 'Create Account'}
               </Button>
+              <Button
+                type="button"
+                className="w-full bg-red-500 hover:bg-red-600 text-white mt-2"
+                onClick={() => {
+                  import('next-auth/react').then(({ signIn }) => signIn('google'));
+                }}
+              >
+                Sign up with Google
+              </Button>
             </form>
           </Form>
           <div className="mt-4 text-center text-sm">

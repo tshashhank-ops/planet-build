@@ -30,6 +30,7 @@ import {
     DialogClose,
 } from '@/components/ui/dialog';
 import SellForm from '@/app/sell/sell-form';
+import { useAuth } from '@/hooks/use-auth';
 
 function MarketplacePageContent() {
     const [modalOpen, setModalOpen] = useState(false);
@@ -38,6 +39,7 @@ function MarketplacePageContent() {
     const [posts, setPosts] = useState<Post[]>([]);
     const [users, setUsers] = useState<any[]>([]);
     const [tradeLeads, setTradeLeads] = useState<any[]>([]);
+    const { user: authUser } = useAuth();
 
     useEffect(() => {
         async function fetchData() {
@@ -283,10 +285,12 @@ function MarketplacePageContent() {
                                                         {filteredPosts.map((post) => (
                                                             <div key={post._id} className="relative group">
                                                                 <PostCard post={post} />
+                                                                {authUser && authUser.role === 'seller' && (
                                                                 <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition">
                                                                     <Button className='bg-gray-50 hover:bg-green-500 material-icons text-black' size="icon" variant="outline" onClick={() => openModal(post)}>&#xe3c9;</Button>
                                                                     <Button className='bg-red-600 hover:bg-red-800 text-white material-icons rounded-lg' size="icon" variant="destructive" onClick={() => handleDelete(post)}>&#xe872;</Button>
                                                                 </div>
+                                                                )}
                                                             </div>
                                                         ))}
                                                 </div>

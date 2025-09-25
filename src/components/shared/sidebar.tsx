@@ -22,13 +22,15 @@ export default function AppSidebar() {
 
   const menuItems = [
     { href: '/marketplace', label: 'Marketplace', icon: Home },
-    { href: '/sell', label: 'Post an Item', icon: PlusCircle },
   ];
 
   if (user) {
     menuItems.push({ href: '/messages', label: 'Messages', icon: MessageSquare });
-  menuItems.push({ href: `/profile/${user._id}/active-listings`, label: 'Active Listings', icon: PlusCircle });
-  menuItems.push({ href: `/profile/${user._id}/reviews`, label: 'Reviews', icon: Star });
+    if (user.role === 'seller' && user.organisation) {
+      menuItems.push({ href: `/sell`, label: 'Post an Item', icon: PlusCircle });
+      menuItems.push({ href: `/profile/${user._id}/active-listings`, label: 'Active Listings', icon: PlusCircle });
+      menuItems.push({ href: `/profile/${user._id}/reviews`, label: 'Reviews', icon: Star });
+  }
   }
 
   return (

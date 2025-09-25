@@ -8,12 +8,18 @@ import EcoBadge from '@/components/eco-badge';
 import { useEffect, useState } from 'react';
 import { Star, Leaf } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function ReviewsPage() {
   const params = useParams();
   const id = params?.id;
   const [user, setUser] = useState<any | null>(null);
   const [orgReviews, setOrgReviews] = useState<any[]>([]);
+  const { user: authUser } = useAuth();
+
+  if (!authUser || authUser.role !== 'buyer') {
+    return <div className="text-center py-12 text-destructive font-bold">Access denied. Buyers only.</div>;
+  }
 
   useEffect(() => {
     if (!id) return;

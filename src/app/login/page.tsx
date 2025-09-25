@@ -112,6 +112,16 @@ export default function LoginPage() {
               <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? 'Logging In...' : 'Log In'}
               </Button>
+              <Button
+                type="button"
+                className="w-full bg-red-500 hover:bg-red-600 text-white mt-2"
+                onClick={() => {
+                  // Use NextAuth signIn for Google
+                  import('next-auth/react').then(({ signIn }) => signIn('google'));
+                }}
+              >
+                Continue with Google 
+              </Button>
             </form>
           </Form>
           <div className="mt-4 text-center text-sm">

@@ -37,7 +37,18 @@ export async function POST(req: NextRequest) {
   await dbConnect();
   try {
     const body = await req.json();
-    const message = await Message.create(body);
+    const message = await Message.create({
+      conversationId: body.conversationId,
+      sentUserId: body.sentUserId,
+      text: body.text,
+      media: body.media,
+      isEdited: body.isEdited ?? false,
+      isDeleted: body.isDeleted ?? false,
+      deliveredTo: body.deliveredTo ?? [],
+      readBy: body.readBy ?? [],
+      reactions: body.reactions ?? [],
+      replyTo: body.replyTo ?? null,
+    });
     return NextResponse.json({ success: true, data: message });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });

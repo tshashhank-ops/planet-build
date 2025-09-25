@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/shared/header';
 import Footer from '@/components/shared/footer';
+import { SessionProvider } from 'next-auth/react';
 import { AuthProvider } from '@/context/auth-context';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/shared/sidebar';

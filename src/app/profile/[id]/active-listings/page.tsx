@@ -11,6 +11,7 @@ import SellForm from '@/app/sell/sell-form';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useParams } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function ActiveListingsPage() {
   const params = useParams();
@@ -20,6 +21,7 @@ export default function ActiveListingsPage() {
   const [loading, setLoading] = useState(false);
   const [editPost, setEditPost] = useState<any | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     if (!id) return;
@@ -116,6 +118,7 @@ export default function ActiveListingsPage() {
           orgPosts.map((post: any) => (
             <div key={post._id || post.id } className="relative group">
               <PostCard post={post} />
+              {authUser && authUser.role === 'seller' && (
               <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition">
                 <Button className='bg-gray-50 hover:bg-green-500 material-icons text-black' size="icon" variant="outline" onClick={() => handleEdit(post)}>
                   &#xe3c9;
@@ -124,6 +127,7 @@ export default function ActiveListingsPage() {
                   &#xe872;
                 </Button>
               </div>
+              )}
             </div>
           ))
         ) : (

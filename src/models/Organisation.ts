@@ -7,6 +7,7 @@ export interface IOrganisation extends Document {
   reviews: Types.ObjectId[];            
   rating: number;                       
   createdAt: Date;
+  logo?: string;
 }
 
 const OrganisationSchema: Schema<IOrganisation> = new Schema({
@@ -16,6 +17,7 @@ const OrganisationSchema: Schema<IOrganisation> = new Schema({
   reviews: [{ type: Schema.Types.ObjectId, ref: 'Review' }],
   rating: { type: Number, default: 0 }, 
   createdAt: { type: Date, default: Date.now },
+  logo: { type: String },
 });
 
 export const Organisation: Model<IOrganisation> =
