@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Post } from '@/lib/types';
+import type { Post, User } from '@/lib/types';
 import React from 'react';
 // import { users } from '@/lib/mock-data';
 import {
@@ -20,12 +20,12 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const [seller, setSeller] = React.useState<any | null>(null);
+  const [seller, setSeller] = React.useState<User | null>(null);
   React.useEffect(() => {
     async function fetchSeller() {
-      if (!post.owner) return setSeller(null);
+      if (!post.seller) return setSeller(null);
       try {
-        const res = await fetch(`/api/organisations/${post.owner}`);
+        const res = await fetch(`/api/users/${post.seller}`);
         if (!res.ok) return setSeller(null);
         const data = await res.json();
         setSeller(data.data || null);
@@ -34,7 +34,8 @@ export default function PostCard({ post }: PostCardProps) {
       }
     }
     fetchSeller();
-  }, [post.owner]);
+  }, [post.seller]);
+  
   const shortDescription =
     post.description.length > 120
       ? `${post.description.substring(0, 120)}...`
@@ -94,15 +95,15 @@ export default function PostCard({ post }: PostCardProps) {
                       : ''}
                   </p>
                 </div>
-                {seller && seller.users && seller.users[0] && (
+                {seller && seller._id && seller.name && (
                   <div className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={seller.users[0].avatar}
-                        alt={seller.users[0].name}
-                        data-ai-hint={seller.users[0].dataAiHint}
+                        src={seller.avatar}
+                        alt={seller.name}
+                        data-ai-hint={seller.dataAiHint}
                       />
-                      <AvatarFallback>{seller.users[0].name?.charAt(0)}</AvatarFallback>
+                      <AvatarFallback>{seller.name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                   </div>
                 )}
@@ -116,13 +117,13 @@ export default function PostCard({ post }: PostCardProps) {
                 <p className="font-bold text-base">{post.title}</p>
                 <p className="text-sm text-muted-foreground">{shortDescription}</p>
               </div>
-              {seller && seller.users && seller.users[0] && (
+              {seller && seller._id && seller.name && (
                 <>
                   <Separator />
                   <div>
-                      <p className="text-xs font-semibold mb-1.5">Sold by {seller.users[0].name}</p>
+                      <p className="text-xs font-semibold mb-1.5">Sold by {seller.name}</p>
                       <div className="flex flex-wrap gap-1">
-                          {(seller.users[0].badges || []).map((badge: string) => <EcoBadge key={badge} badgeName={badge} />)}
+                          {(seller.badges || []).map((badge: string) => <EcoBadge key={badge} badgeName={badge} />)}
                       </div>
                   </div>
                 </>
