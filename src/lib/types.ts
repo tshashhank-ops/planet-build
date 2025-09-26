@@ -16,8 +16,8 @@ export type Post = {
 	description: string;
 	condition: "new" | "reclaimed"; // match schema
 	photos: string[];
-	owner?: string; // organisationId as string
-	seller?: string; // userId as string
+	owner?: string | User; // organisationId as string or populated Organisation
+	seller?: string | User; // userId as string or populated User
 	category: string;
 	location: string;
 	quantity: number;
@@ -45,6 +45,7 @@ export type Review = {
 
 export type User = {
 	_id: string;
+	id?: string; // Alias for _id for compatibility
 	name: string;
 	email: string;
 	passwordHash: string;

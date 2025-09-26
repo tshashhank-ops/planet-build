@@ -3,8 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import Header from "@/components/shared/header";
 import Footer from "@/components/shared/footer";
-import { SessionProvider } from "next-auth/react";
-import { AuthProvider } from "@/context/auth-context";
+import { Providers } from "@/components/providers";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/shared/sidebar";
 
@@ -37,7 +36,7 @@ export default function RootLayout({
 				/>
 			</head>
 			<body className="font-body antialiased">
-				<AuthProvider>
+				<Providers>
 					<SidebarProvider>
 						<AppSidebar />
 						<SidebarInset className="flex flex-col">
@@ -49,7 +48,7 @@ export default function RootLayout({
 							<Toaster />
 						</SidebarInset>
 					</SidebarProvider>
-				</AuthProvider>
+				</Providers>
 			</body>
 		</html>
 	);

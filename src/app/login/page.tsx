@@ -47,13 +47,17 @@ export default function LoginPage() {
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {
 		try {
-			const user = await login(values.email, values.password);
-			if (user) {
+			const result = await login(values.email, values.password);
+			if (result === null) {
+				// Login was successful, user state will be updated by session sync
 				toast({
 					title: "Login Successful",
-					description: `Welcome back, ${user.name}!`,
+					description: "Welcome back! Redirecting...",
 				});
-				router.push(`/profile/${user._id}`);
+				// Wait a moment for session to update, then redirect
+				setTimeout(() => {
+					router.push("/");
+				}, 1000);
 			} else {
 				toast({
 					title: "Login Failed",
