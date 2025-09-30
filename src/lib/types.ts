@@ -71,6 +71,7 @@ export type Conversation = {
 	_id: string;
 	isActive: boolean;
 	users: UserInConversation[];
+	postId?: string | Post;
 	createdAt: string;
 	updatedAt: string;
 	lastMessage?: Message;
@@ -139,7 +140,11 @@ export interface NextApiRequestWithSocket extends NextApiRequest {
 export type Organisation = {
 	_id: string;
 	name: string;
+	description?: string;
 	members: User[];
+	reviews?: Review[];
+	rating: number;
+	logo?: string;
 	createdAt: string;
 	updatedAt: string;
 };

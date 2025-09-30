@@ -286,7 +286,7 @@ function MarketplacePageContent() {
                                                             <div key={post._id} className="relative group">
                                                                 <PostCard post={post} />
                                                                 {authUser && authUser.role === 'seller' && (
-                                                                <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                                                                <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition">
                                                                     <Button className='bg-gray-50 hover:bg-green-500 material-icons text-black' size="icon" variant="outline" onClick={() => openModal(post)}>&#xe3c9;</Button>
                                                                     <Button className='bg-red-600 hover:bg-red-800 text-white material-icons rounded-lg' size="icon" variant="destructive" onClick={() => handleDelete(post)}>&#xe872;</Button>
                                                                 </div>

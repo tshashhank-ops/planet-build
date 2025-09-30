@@ -196,9 +196,9 @@ export default function MessagesPage() {
 	}
 
 	return (
-		<div className="flex flex-col h-[calc(100vh-12rem)]">
-			<Card className="flex flex-grow min-h-0 grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
-				<div className="md:col-span-1 lg:col-span-1 border-r flex flex-col">
+		<div className="flex flex-col h-[calc(100vh-10rem)]">
+			<Card className="flex flex-grow min-h-0 grid-cols-3 md:grid-cols-2 lg:grid-cols-3">
+				   <div className="md:col-span-1 lg:col-span-1 border-r flex flex-col" style={{ minWidth: 180, maxWidth: 300, width: '100%' }}>
 					<CardHeader>
 						<h2 className="text-xl font-bold">Conversations</h2>
 					</CardHeader>
@@ -229,6 +229,19 @@ export default function MessagesPage() {
 												<p className="font-semibold">
 													{otherUser?.name ?? "Unknown"}
 												</p>
+												   <p className="text-sm text-muted-foreground truncate max-w-[150px]">
+													   {/* Display post title instead of postId */}
+													   {(() => {
+														   // convo.postId may be an object or a string
+														   let postId = convo.postId;
+														   if (typeof postId === 'object' && postId !== null) {
+															   // If it's a post object, use its _id
+															   postId = postId._id;
+														   }
+														   const post = posts.find((p) => p._id === postId);
+														   return post ? post.title : (typeof convo.postId === 'object' && convo.postId !== null ? convo.postId.title : String(convo.postId));
+													   })()}
+												   </p>
 												<p className="text-sm text-muted-foreground truncate max-w-[150px]">
 													{convo.lastMessage?.text ?? ""}
 												</p>
@@ -275,6 +288,39 @@ export default function MessagesPage() {
 										);
 									})()}
 								</div>
+
+								{selectedConversation.postId && (
+									<div className="mt-4 flex items-center gap-3 rounded-md border p-3 bg-muted/50">
+										{(() => {
+											const post = selectedConversation.postId as any;
+											const photo = Array.isArray(post?.photos)
+												? post.photos[0]
+												: undefined;
+											return (
+												<>
+													{photo ? (
+														<img
+															src={photo}
+															alt={post?.title}
+															className="h-12 w-12 rounded object-cover"
+														/>
+													) : (
+														<div className="h-12 w-12 rounded bg-muted" />
+													)}
+													<div className="min-w-0">
+														<p className="font-semibold">
+															{post?.title}
+														</p>
+														<p className="text-xs text-muted-foreground truncate max-w-[260px]">
+															{post?.location} • $
+															{post?.price?.toFixed?.(2) ?? post?.price}
+														</p>
+													</div>
+												</>
+											);
+										})()}
+									</div>
+								)}
 							</CardHeader>
 
 							<ScrollArea className="flex-grow min-h-0 bg-muted/50 p-4">
@@ -404,8 +450,8 @@ export default function MessagesPage() {
 																		(users as string[]).includes(
 																			currentUser._id
 																		)
-																			? "bg-primary/20"
-																			: "bg-muted"
+																			? "bg-primary/20 outline outline-1 outline-*****"
+																			: "bg-primary/20 outline outline-1 outline-black"
 																	)}
 																	title={(users as string[])
 																		.map(

@@ -44,6 +44,7 @@ import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Post } from "@/lib/types";
+// Image uploads removed from sell form; manage on the item page after creation
 
 interface SellFormProps {
 	post: Post | null;
@@ -118,6 +119,41 @@ export default function SellForm({ post, mode, onSuccess }: SellFormProps) {
 	const condition = form.watch("condition");
 	const enableBidding = form.watch("enableBidding");
 
+	// Preload existing post details when editing
+	useEffect(() => {
+		if (mode === "edit" && post) {
+			form.reset({
+				name: post.title || "",
+				description: post.description || "",
+				category: typeof post.category === "string" ? post.category : "",
+				condition: (post.condition as "new" | "reclaimed") || undefined,
+				quantity:
+					post.quantity !== undefined && post.quantity !== null
+						? String(post.quantity)
+						: "",
+				price:
+					post.price !== undefined && post.price !== null
+						? Number(post.price)
+						: (undefined as any),
+				location: post.location || "",
+				dimensions: post.dimensions || "",
+				weight: post.weight || "",
+				incoterms: post.incoterms || "",
+				hsCode: post.hsCode || "",
+				specialHandling: !!post.specialHandling,
+				enableBidding: !!post.enableBidding,
+				startingBid:
+					post.startingBid !== undefined && post.startingBid !== null
+						? Number(post.startingBid)
+						: (undefined as any),
+				auctionEndDate: post.auctionEndDate
+					? new Date(post.auctionEndDate)
+					: (undefined as any),
+			});
+			setUploadedPhotos(Array.isArray(post.photos) ? post.photos : []);
+		}
+	}, [mode, post, form]);
+
 	useEffect(() => {
 		if (!user) {
 			toast({
@@ -138,37 +174,55 @@ export default function SellForm({ post, mode, onSuccess }: SellFormProps) {
 
 	const onSubmit = async (values: z.infer<typeof formSchema>) => {
 		try {
-			const res = await fetch("/api/posts", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					title: values.name,
-					description: values.description,
-					category: values.category,
-					condition: values.condition,
-					quantity: Number(values.quantity), // ensure number
-					price: Number(values.price), // ensure number
-					location: values.location,
-					dimensions: values.dimensions,
-					weight: values.weight,
-					incoterms: values.incoterms,
-					hsCode: values.hsCode,
-					specialHandling: values.specialHandling,
-					enableBidding: values.enableBidding,
-					startingBid: values.startingBid
-						? Number(values.startingBid)
-						: undefined,
-					auctionEndDate: values.auctionEndDate
-						? new Date(values.auctionEndDate).toISOString()
-						: undefined,
-					seller: user?._id, // Add current user as seller
-				}),
-			});
-			if (!res.ok) throw new Error("Failed to create listing");
+			let res;
+			const payload = {
+				title: values.name,
+				description: values.description,
+				category: values.category,
+				condition: values.condition,
+				quantity: Number(values.quantity),
+				price: Number(values.price),
+				location: values.location,
+				dimensions: values.dimensions,
+				weight: values.weight,
+				incoterms: values.incoterms,
+				hsCode: values.hsCode,
+				specialHandling: values.specialHandling,
+				enableBidding: values.enableBidding,
+				startingBid: values.startingBid
+					? Number(values.startingBid)
+					: undefined,
+				auctionEndDate: values.auctionEndDate
+					? new Date(values.auctionEndDate).toISOString()
+					: undefined,
+				seller: user?._id,
+				photos: uploadedPhotos,
+			};
+			if (mode === "edit" && post && post._id) {
+				res = await fetch(`/api/posts/${post._id}`, {
+					method: "PUT",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(payload),
+				});
+			} else {
+				res = await fetch("/api/posts", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(payload),
+				});
+			}
+			if (!res.ok)
+				throw new Error(
+					mode === "edit"
+						? "Failed to update listing"
+						: "Failed to create listing"
+				);
 			toast({
-				title: "Listing Created!",
+				title: mode === "edit" ? "Listing Updated!" : "Listing Created!",
 				description:
-					"Your material has been successfully listed on the marketplace.",
+					mode === "edit"
+						? "Your material listing has been updated."
+						: "Your material has been successfully listed on the marketplace.",
 				variant: "default",
 				className: "bg-primary text-primary-foreground",
 			});
@@ -177,11 +231,16 @@ export default function SellForm({ post, mode, onSuccess }: SellFormProps) {
 		} catch (err) {
 			toast({
 				title: "Error",
-				description: "Could not create listing.",
+				description:
+					mode === "edit"
+						? "Could not update listing."
+						: "Could not create listing.",
 				variant: "destructive",
 			});
 		}
 	};
+
+	const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
 
 	const handleSuggestion = async () => {
 		const description = form.getValues("description");
@@ -664,35 +723,7 @@ export default function SellForm({ post, mode, onSuccess }: SellFormProps) {
 					</div>
 				)}
 
-				<FormItem>
-					<FormLabel>Upload Photos</FormLabel>
-					<FormControl>
-						<div className="flex items-center justify-center w-full">
-							<label
-								htmlFor="dropzone-file"
-								className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary">
-								<div className="flex flex-col items-center justify-center pt-5 pb-6">
-									<p className="mb-2 text-sm text-muted-foreground">
-										<span className="font-semibold">Click to upload</span> or
-										drag and drop
-									</p>
-									<p className="text-xs text-muted-foreground">
-										PNG, JPG, or GIF (MAX. 800x400px)
-									</p>
-								</div>
-								<Input
-									id="dropzone-file"
-									type="file"
-									className="hidden"
-									multiple
-								/>
-							</label>
-						</div>
-					</FormControl>
-					<FormDescription>
-						High-quality photos are crucial for attracting buyers.
-					</FormDescription>
-				</FormItem>
+				{/* Photo uploads are managed on the item page after listing is created */}
 
 				<div className="flex justify-end">
 					<Button type="submit" size="lg">

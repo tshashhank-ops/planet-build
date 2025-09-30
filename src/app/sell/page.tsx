@@ -1,6 +1,8 @@
+'use client';
 import SellFormWrapper from './SellFormWrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Leaf } from 'lucide-react';
+import { use } from 'react';
 
 export default function SellPage() {
   return (

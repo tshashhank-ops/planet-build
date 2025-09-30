@@ -93,3 +93,8 @@ body {
   background-size: cover;
   background-position: center;
 }
+
+#cloudinary-overlay, .cloudinary-widget, .cloudinary-modal {
+  z-index: 2147483647 !important;
+  pointer-events: auto !important;
+}

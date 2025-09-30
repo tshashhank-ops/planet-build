@@ -31,14 +31,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 	await dbConnect();
 	try {
 		const body = await req.json();
+		console.log("[POST UPDATE] Payload received:", JSON.stringify(body));
 		const parsed = postUpdateSchema.safeParse(body);
 		if (!parsed.success) {
+			console.log("[POST UPDATE] Validation error:", parsed.error.errors);
 			return NextResponse.json({ success: false, error: 'Validation error', details: parsed.error.errors }, { status: 400 });
 		}
 		const post = await Post.findByIdAndUpdate(params.id, parsed.data, { new: true });
-		if (!post) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
+		if (!post) {
+			console.log("[POST UPDATE] Post not found for id:", params.id);
+			return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
+		}
+		console.log("[POST UPDATE] Updated post:", JSON.stringify(post));
 		return NextResponse.json({ success: true, data: post });
 	} catch (error) {
+		console.log("[POST UPDATE] Server error:", error);
 		return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
 	}
 }

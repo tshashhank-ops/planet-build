@@ -15,11 +15,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 interface BuyingAssistantProps {
-  material: Material;
+  post: Material;
   seller: User;
 }
 
-export default function BuyingAssistant({ material, seller }: BuyingAssistantProps) {
+export default function BuyingAssistant({ post: material, seller }: BuyingAssistantProps) {
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [assistance, setAssistance] = useState<{ response: string; steps: string[] } | null>(null);
